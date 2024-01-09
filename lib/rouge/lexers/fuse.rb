@@ -27,6 +27,9 @@ module Rouge
       def self.builtins
         @builtins ||= Set.new %w(
           number string ustring any unknown never default namespace
+          _G _VERSION assert collectgarbage dofile error getmetatable
+          ipairs load loadfile next pairs pcall print rawequal rawget rawlen
+          rawset select setmetatable tonumber tostring xpcall
         )
       end
 
