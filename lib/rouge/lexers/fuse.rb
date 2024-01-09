@@ -26,15 +26,7 @@ module Rouge
 
       def self.builtins
         @builtins ||= Set.new %w(
-          Add BitAnd BitOr BitXor bool c_char c_double c_float char
-          c_int clock_t c_long c_longlong Cons Const Copy c_schar c_short
-          c_uchar c_uint c_ulong c_ulonglong c_ushort c_void dev_t DIR
-          dirent Div Either Eq Err f32 f64 Failure FILE float fpos_t
-          i16 i32 i64 i8 isize Index ino_t int intptr_t Left mode_t Modulo Mul
-          Neg Nil None Num off_t Ok Option Ord Owned pid_t Ptr ptrdiff_t
-          Right Send Shl Shr size_t Some ssize_t str Sub Success time_t
-          u16 u32 u64 u8 usize uint uintptr_t
-          Box Vec String Gc Rc Arc
+          number string ustring any unknown never default namespace
         )
       end
 
