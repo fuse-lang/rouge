@@ -74,7 +74,7 @@ module Rouge
           if name == "gsub"
             token Name::Builtin
             push :gsub
-          elsif self.builtins.include?(name)
+          elsif self.class.builtins.include?(name)
             token Name::Builtin
           elsif name =~ /\./
             a, b = name.split('.', 2)
