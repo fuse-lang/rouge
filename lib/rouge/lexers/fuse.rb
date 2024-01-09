@@ -24,10 +24,17 @@ module Rouge
         return true if text.shebang? 'fuse'
       end
 
-      def self.keywords
-        @keywords ||= Set.new %w(
-          and, break, do, else, elseif, end, false, for, function, fn,
-          if, in, local, nil, not, or, repeat, return, then, true, until, while
+      def self.builtins
+        @builtins ||= Set.new %w(
+          Add BitAnd BitOr BitXor bool c_char c_double c_float char
+          c_int clock_t c_long c_longlong Cons Const Copy c_schar c_short
+          c_uchar c_uint c_ulong c_ulonglong c_ushort c_void dev_t DIR
+          dirent Div Either Eq Err f32 f64 Failure FILE float fpos_t
+          i16 i32 i64 i8 isize Index ino_t int intptr_t Left mode_t Modulo Mul
+          Neg Nil None Num off_t Ok Option Ord Owned pid_t Ptr ptrdiff_t
+          Right Send Shl Shr size_t Some ssize_t str Sub Success time_t
+          u16 u32 u64 u8 usize uint uintptr_t
+          Box Vec String Gc Rc Arc
         )
       end
 
@@ -56,10 +63,11 @@ module Rouge
         rule %r((and|or|not)\b), Operator::Word
 
         rule %r((break|do|else|elseif|end|for|if|in|repeat|return|then|until|while)\b), Keyword
-        rule %r((local)\b), Keyword::Declaration
+        rule %r((as|struct|type|trait|impl|import|from|export|match|when|is|try|catch|finally)\b), Keyword
+        rule %r((const|let|global)\b), Keyword::Declaration
         rule %r((true|false|nil)\b), Keyword::Constant
 
-        rule %r((function)\b), Keyword, :function_name
+        rule %r((function|fn)\b), Keyword, :function_name
 
         rule %r([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?) do |m|
           name = m[0]
