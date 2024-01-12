@@ -58,7 +58,7 @@ module Rouge
         rule %r((and|or|not)\b), Operator::Word
 
         rule %r((break|do|else|elseif|end|for|if|in|repeat|return|then|until|while)\b), Keyword
-        rule %r((as|struct|type|trait|impl|import|from|export|match|when|is|try|catch|finally)\b), Keyword
+        rule %r((as|struct|type|trait|impl|import|from|export|match|when|is|try|catch|finally|pub)\b), Keyword
         rule %r((const|let|global)\b), Keyword::Declaration
         rule %r((true|false|nil)\b), Keyword::Constant
 
