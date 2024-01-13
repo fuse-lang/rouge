@@ -145,13 +145,13 @@ module Rouge
       end
 
       state :sqs do
-        rule %r('), Str::Single, :pop!
-        rule %r([^']+), Str::Single
+        rule %r/[^\\']+/, Str::Single
+        rule %r/'/, Str::Single, :pop!
       end
 
       state :dqs do
-        rule %r("), Str::Double, :pop!
-        rule %r([^"]+), Str::Double
+        rule %r/[^\\"]+/, Str::Double
+        rule %r/"/, Str::Double, :pop!
       end
     end
   end
