@@ -53,10 +53,12 @@ module Rouge
         rule %r(--\[(=*)\[.*?\]\1\])m, Comment::Multiline
         rule %r(--.*$), Comment::Single
 
-        rule %r((?i)(\d*\.\d+|\d+\.\d*)(e[+-]?\d+)?'), Num::Float
-        rule %r((?i)\d+e[+-]?\d+), Num::Float
-        rule %r((?i)0x[0-9a-f]*), Num::Hex
-        rule %r(\d+), Num::Integer
+        num = /[0-9_]/
+        rule %r((?i)(#{num}*\.#{num}+|#{num}+\.#{num}*)(e[+-]?+)?'), Num::Float
+        rule %r((?i)#{num}+e[+-]?\d+), Num::Float
+        rule %r((?i)0b[01_]*), Num::Bin
+        rule %r((?i)0x[0-9a-fA-F_]*), Num::Hex
+        rule %r(#{num}+), Num::Integer
 
         rule %r(\n), Text
         rule %r([^\S\n]), Text
