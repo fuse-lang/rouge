@@ -60,8 +60,6 @@ module Rouge
 
         rule %r(\n), Text
         rule %r([^\S\n]), Text
-        # multiline strings
-        rule %r(\[(=*)\[.*?\]\1\])m, Str
 
         rule %r((==|~=|<=|>=|\.\.\.|\.\.|[=+\-*/%^<>#])), Operator
         rule %r([\[\]\{\}\(\)\.,:;]), Punctuation
