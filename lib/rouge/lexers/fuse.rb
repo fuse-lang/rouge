@@ -38,9 +38,6 @@ module Rouge
       end
 
       state :root do
-        # rule %r/(u?r)(#*)(["'])/m do |m|
-        #   puts m.inspect
-        # end
         # fuse allows a file to start with a shebang
         rule %r(#!(.*?)$), Comment::Preproc
         rule %r//, Text, :base
@@ -79,7 +76,6 @@ module Rouge
 
 
         rule %r/([u]{0,1})('''|"""|['"])/i do |m|
-          # puts m[0], m[1], m[2], "GG"
           groups Str::Affix, Str
           current_string.register type: m[1].downcase, delim: m[2]
           push :generic_string
@@ -164,7 +160,6 @@ module Rouge
         rule %r/(?=\\)/, Str, :generic_escape
 
         rule %r/\${/ do |m|
-          puts m[0], m[1],  'ggg'
             token Str::Interpol
             push :generic_interpol
         end
