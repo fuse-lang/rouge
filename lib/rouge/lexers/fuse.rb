@@ -74,7 +74,7 @@ module Rouge
 
 
         rule %r/([u]{0,1})('''|"""|['"])/i do |m|
-          groups Str::Affix, Str
+          token Str
           current_string.register type: m[1].downcase, delim: m[2]
           push :generic_string
         end
