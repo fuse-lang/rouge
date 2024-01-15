@@ -33,11 +33,24 @@ module Rouge
         )
       end
 
+      def current_string
+        @string_register ||= StringRegister.new
+      end
+
       state :root do
+        # rule %r/(u?r)(#*)(["'])/m do |m|
+        #   puts m.inspect
+        # end
         # fuse allows a file to start with a shebang
         rule %r(#!(.*?)$), Comment::Preproc
         rule %r//, Text, :base
       end
+
+      ascii = /\d{1,3}/i
+      hex = /[0-9a-f]/i
+      escapes = %r(
+        \\ ([abfnrtv\\"'] | #{ascii} | x#{hex}{2} | u#{hex}{4} | U#{hex}{8})
+      )x
 
       state :base do
         rule %r(--\[(=*)\[.*?\]\1\])m, Comment::Multiline
@@ -64,6 +77,18 @@ module Rouge
 
         rule %r((function|fn)\b), Keyword, :function_name
 
+
+        rule %r/([u]{0,1})('''|"""|['"])/i do |m|
+          # puts m[0], m[1], m[2], "GG"
+          groups Str::Affix, Str
+          current_string.register type: m[1].downcase, delim: m[2]
+          push :generic_string
+        end
+
+        # raw strings
+        rule %r/(u?r)(#*)(["'])(.|\n)*?(\3)(\2)/, Str
+
+        # identifiers
         rule %r([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?) do |m|
           name = m[0]
           if name == "gsub"
@@ -80,9 +105,6 @@ module Rouge
             token Name
           end
         end
-
-        rule %r('), Str::Single, :escape_sqs
-        rule %r("), Str::Double, :escape_dqs
       end
 
       state :function_name do
@@ -130,29 +152,57 @@ module Rouge
         rule %r/./, Str::Regex
       end
 
-      state :escape_sqs do
-        mixin :string_escape
-        mixin :sqs
+      state :generic_string do
+        rule %r/'''|"""|['"]/ do |m|
+          token Str
+          if current_string.delim? m[0]
+            current_string.remove
+            pop!
+          end
+        end
+
+        rule %r/(?=\\)/, Str, :generic_escape
+
+        rule %r/\${/ do |m|
+          puts m[0], m[1],  'ggg'
+            token Str::Interpol
+            push :generic_interpol
+        end
+
+        rule %r/./i, Str
       end
 
-      state :escape_dqs do
-        mixin :string_escape
-        mixin :dqs
+      state :generic_escape do
+        rule escapes, Str::Escape, :pop!
       end
 
-      state :string_escape do
-        rule %r(\\([abfnrtv\\"']|\d{1,3})), Str::Escape
+      state :generic_interpol do
+        rule %r/[^${}]+/ do |m|
+          recurse m[0]
+        end
+        rule %r/\${/, Str::Interpol, :generic_interpol
+        rule %r/}/, Str::Interpol, :pop!
       end
 
-      state :sqs do
-        rule %r/[^\\']+/, Str::Single
-        rule %r/'/, Str::Single, :pop!
+      class StringRegister < Array
+        def delim?(delim)
+          self.last[1] == delim
+        end
+
+        def register(type: "u", delim: "'")
+          self.push [type, delim]
+        end
+
+        def remove
+          self.pop
+        end
+
+        def type?(type)
+          self.last[0].include? type
+        end
       end
 
-      state :dqs do
-        rule %r/[^\\"]+/, Str::Double
-        rule %r/"/, Str::Double, :pop!
-      end
+      private_constant :StringRegister
     end
   end
 end
