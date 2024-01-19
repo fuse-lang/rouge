@@ -69,7 +69,7 @@ module Rouge
 
         rule %r((break|do|else|elseif|end|for|if|in|repeat|return|then|until|while)\b), Keyword
         rule %r((as|enum|struct|type|trait|impl|import|from|export|match|when|is|try|catch|finally|pub)\b), Keyword
-        rule %r((const|let|global)\b), Keyword::Declaration
+        rule %r((const|let|static)\b), Keyword::Declaration
         rule %r((true|false|nil)\b), Keyword::Constant
 
         rule %r((function|fn)\b), Keyword, :function_name
