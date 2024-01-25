@@ -29,7 +29,7 @@ module Rouge
           number string ustring any unknown never unsafe default namespace
           _G _VERSION assert assert_eq collectgarbage dofile error getmetatable
           ipairs load loadfile next pairs pcall print rawequal rawget rawlen
-          rawset select setmetatable tonumber tostring xpcall
+          rawset select setmetatable tonumber tostring xpcall typeof
         )
       end
 
