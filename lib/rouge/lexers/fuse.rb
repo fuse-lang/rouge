@@ -50,8 +50,6 @@ module Rouge
 
         rule %r(\n), Text
         rule %r([^\S\n]), Text
-        # multiline strings
-        rule %r(\[(=*)\[.*?\]\1\])m, Str
 
         rule %r((==|~=|<=|>=|\.\.\.|\.\.|[=+\-*/%^<>#])), Operator
         rule %r([\[\]\{\}\(\)\.,:;]), Punctuation
@@ -63,6 +61,10 @@ module Rouge
         rule %r((true|false|nil)\b), Keyword::Constant
 
         rule %r((function|fn)\b), Keyword, :function_name
+
+        rule %r/u{0,1}r(#*)("|').*?\2\1/m, Str
+        rule %r(u{0,1}'), Str::Single, :escape_sqs
+        rule %r(u{0,1}"), Str::Double, :escape_dqs
 
         rule %r([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?) do |m|
           name = m[0]
@@ -81,8 +83,6 @@ module Rouge
           end
         end
 
-        rule %r('), Str::Single, :escape_sqs
-        rule %r("), Str::Double, :escape_dqs
       end
 
       state :function_name do
@@ -141,17 +141,17 @@ module Rouge
       end
 
       state :string_escape do
-        rule %r(\\([abfnrtv\\"']|\d{1,3})), Str::Escape
+        rule %r(\\([nrt\\"'0\s]|\d{1,3}))xm, Str::Escape
       end
 
       state :sqs do
         rule %r('), Str::Single, :pop!
-        rule %r([^']+), Str::Single
+        rule %r/[^'\\]+/m, Str::Single
       end
 
       state :dqs do
         rule %r("), Str::Double, :pop!
-        rule %r([^"]+), Str::Double
+        rule %r/[^"\\]+/m, Str::Double
       end
     end
   end
