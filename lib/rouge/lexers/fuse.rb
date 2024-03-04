@@ -26,11 +26,15 @@ module Rouge
 
       def self.builtins
         @builtins ||= Set.new %w(
-          number string ustring any unknown never default namespace
-          _G _VERSION assert collectgarbage dofile error getmetatable
+          number string ustring any unknown never unsafe default namespace
+          _G _VERSION assert assert_eq collectgarbage dofile error getmetatable
           ipairs load loadfile next pairs pcall print rawequal rawget rawlen
-          rawset select setmetatable tonumber tostring xpcall
+          rawset select setmetatable tonumber tostring xpcall typeof
         )
+      end
+
+      def current_string
+        @string_register ||= StringRegister.new
       end
 
       state :root do
@@ -39,33 +43,48 @@ module Rouge
         rule %r//, Text, :base
       end
 
+      ascii = /\d{1,3}/i
+      hex = /[0-9a-f]/i
+      escapes = %r(
+        \\ ([nrt\\"'0\s] | #{ascii} | x#{hex}{2} | u#{hex}{4} | U#{hex}{8})
+      )xm
+
       state :base do
         rule %r(--\[(=*)\[.*?\]\1\])m, Comment::Multiline
         rule %r(--.*$), Comment::Single
 
-        rule %r((?i)(\d*\.\d+|\d+\.\d*)(e[+-]?\d+)?'), Num::Float
-        rule %r((?i)\d+e[+-]?\d+), Num::Float
-        rule %r((?i)0x[0-9a-f]*), Num::Hex
-        rule %r(\d+), Num::Integer
+        num = /[0-9_]/
+        rule %r((?i)(#{num}*\.#{num}+|#{num}+\.#{num}*)(e[+-]?+)?'), Num::Float
+        rule %r((?i)#{num}+e[+-]?\d+), Num::Float
+        rule %r((?i)0b[01_]*), Num::Bin
+        rule %r((?i)0x[0-9a-fA-F_]*), Num::Hex
+        rule %r(#{num}+), Num::Integer
 
         rule %r(\n), Text
         rule %r([^\S\n]), Text
 
-        rule %r((==|~=|<=|>=|\.\.\.|\.\.|[=+\-*/%^<>#])), Operator
+        rule %r((==|!=|<=|>=|\.\.\.|[&|!\(<<\)\(>>\)]|[=+\-*/%^<>#])), Operator
         rule %r([\[\]\{\}\(\)\.,:;]), Punctuation
         rule %r((and|or|not)\b), Operator::Word
 
         rule %r((break|do|else|elseif|end|for|if|in|repeat|return|then|until|while)\b), Keyword
-        rule %r((as|struct|type|trait|impl|import|from|export|match|when|is|try|catch|finally)\b), Keyword
-        rule %r((const|let|global)\b), Keyword::Declaration
+        rule %r((as|enum|struct|type|trait|impl|union|import|from|export|match|when|is|try|catch|finally|pub)\b), Keyword
+        rule %r((const|let|static)\b), Keyword::Declaration
         rule %r((true|false|nil)\b), Keyword::Constant
 
         rule %r((function|fn)\b), Keyword, :function_name
 
-        rule %r/u{0,1}r(#*)("|').*?\2\1/m, Str
-        rule %r(u{0,1}'), Str::Single, :escape_sqs
-        rule %r(u{0,1}"), Str::Double, :escape_dqs
 
+        rule %r/([u]{0,1})('|")/i do |m|
+          token Str
+          current_string.register type: m[1].downcase, delim: m[2]
+          push :generic_string
+        end
+
+        # raw strings
+        rule %r/(u?r)(#*)(["'])(.|\n)*?(\3)(\2)/, Str
+
+        # identifiers
         rule %r([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?) do |m|
           name = m[0]
           if name == "gsub"
@@ -82,7 +101,6 @@ module Rouge
             token Name
           end
         end
-
       end
 
       state :function_name do
@@ -130,29 +148,56 @@ module Rouge
         rule %r/./, Str::Regex
       end
 
-      state :escape_sqs do
-        mixin :string_escape
-        mixin :sqs
+      state :generic_string do
+        mixin :generic_escape
+
+        rule %r/['"]/ do |m|
+          token Str
+          if current_string.delim? m[0]
+            current_string.remove
+            pop!
+          end
+        end
+
+        rule %r/\${/ do |m|
+            token Str::Interpol
+            push :generic_interpol
+        end
+
+        rule %r/[^"\\]+/m, Str
       end
 
-      state :escape_dqs do
-        mixin :string_escape
-        mixin :dqs
+      state :generic_escape do
+        rule escapes, Str::Escape
       end
 
-      state :string_escape do
-        rule %r(\\([nrt\\"'0\s]|\d{1,3}))xm, Str::Escape
+      state :generic_interpol do
+        rule %r/[^${}]+/ do |m|
+          recurse m[0]
+        end
+        rule %r/\${/, Str::Interpol, :generic_interpol
+        rule %r/}/, Str::Interpol, :pop!
       end
 
-      state :sqs do
-        rule %r('), Str::Single, :pop!
-        rule %r/[^'\\]+/m, Str::Single
+      class StringRegister < Array
+        def delim?(delim)
+          self.last[1] == delim
+        end
+
+        def register(type: "u", delim: "'")
+          self.push [type, delim]
+        end
+
+        def remove
+          self.pop
+        end
+
+        def type?(type)
+          self.last[0].include? type
+        end
       end
 
-      state :dqs do
-        rule %r("), Str::Double, :pop!
-        rule %r/[^"\\]+/m, Str::Double
-      end
+      private_constant :StringRegister
     end
   end
 end
