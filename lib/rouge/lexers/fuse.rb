@@ -150,6 +150,7 @@ module Rouge
 
       state :generic_string do
         mixin :generic_escape
+        rule %r/[^'"\\${]+/, Str
 
         rule %r/['"]/ do |m|
           token Str
@@ -163,8 +164,6 @@ module Rouge
             token Str::Interpol
             push :generic_interpol
         end
-
-        rule %r/[^"\\]+/m, Str
       end
 
       state :generic_escape do
