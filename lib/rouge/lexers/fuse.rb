@@ -63,7 +63,7 @@ module Rouge
         rule %r(\n), Text
         rule %r([^\S\n]), Text
 
-        rule %r((==|!=|<=|>=|\.\.\.|[&|!\(<<\)\(>>\)]|[=+\-*/%^<>#])), Operator
+        rule %r((==|!=|<=|>=|\.\.\.|\?|[&|!\(<<\)\(>>\)]|[=+\-*/%^<>#])), Operator
         rule %r([\[\]\{\}\(\)\.,:;]), Punctuation
         rule %r((and|or|not)\b), Operator::Word
 
